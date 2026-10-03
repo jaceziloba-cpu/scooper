@@ -11,6 +11,8 @@ flutter run
 
 L'application utilise Supabase Auth pour l'email/mot de passe, la vérification email, la récupération de compte et Google OAuth.
 
+Le déploiement web Vercel utilise `vercel.json` pour construire Flutter Web dans `build/web` et conserver les routes de l'application.
+
 Pour Google OAuth, activez le fournisseur Google dans Supabase Authentication et renseignez les identifiants OAuth Google du projet dans Supabase ; ils ne doivent jamais être placés dans Flutter.
 
 Dans Google Cloud, l'URI de redirection autorisée doit être `https://unhuvqhabnanzgeldqhh.supabase.co/auth/v1/callback`. Dans Supabase, ajoutez `io.supabase.scooper://login-callback` aux Redirect URLs autorisées de l'application.
