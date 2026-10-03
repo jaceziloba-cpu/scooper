@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
@@ -30,7 +31,7 @@ class SupabaseAuthRepository implements AuthRepository {
   Future<void> signInWithGoogle() async {
     await _client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: SupabaseConfig.oauthRedirectUri,
+      redirectTo: kIsWeb ? Uri.base.origin : SupabaseConfig.oauthRedirectUri,
     );
   }
 

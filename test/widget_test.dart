@@ -8,9 +8,9 @@ void main() {
     await tester.pumpWidget(
       ScooperApp(authController: controller, supabaseReady: false),
     );
-    expect(find.text('Scooper'), findsOneWidget);
+    expect(find.text('Bon retour 👋'), findsOneWidget);
     expect(
-      find.textContaining('Supabase n’est pas disponible'),
+      find.textContaining('service est temporairement indisponible'),
       findsOneWidget,
     );
     controller.dispose();

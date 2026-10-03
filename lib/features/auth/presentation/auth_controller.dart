@@ -37,13 +37,30 @@ class AuthController extends ChangeNotifier {
     try {
       await operation();
     } on AuthException catch (error) {
-      errorMessage = error.message;
+      errorMessage = _friendlyError(error);
     } catch (_) {
       errorMessage = 'Une erreur est survenue. Réessayez.';
     } finally {
       isBusy = false;
       notifyListeners();
     }
+  }
+
+  String _friendlyError(AuthException error) {
+    final message = error.message.toLowerCase();
+    if (error.code == 'validation_failed' || message.contains('provider')) {
+      return 'La connexion Google n’est pas encore activée. Activez Google dans Supabase > Authentication > Providers.';
+    }
+    return switch (error.code) {
+      'invalid_credentials' => 'Email ou mot de passe incorrect.',
+      'email_exists' => 'Cette adresse email est déjà utilisée.',
+      'weak_password' => 'Le mot de passe doit contenir au moins 6 caractères.',
+      'invalid_email' => 'Adresse email invalide.',
+      'user_not_found' => 'Aucun compte ne correspond à cette adresse.',
+      'over_email_send_rate_limit' =>
+        'Trop de demandes. Réessayez dans quelques minutes.',
+      _ => error.message,
+    };
   }
 
   @override
