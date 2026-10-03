@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/presentation/auth_controller.dart';
+import '../../users/domain/role_request.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({required this.controller, super.key});
@@ -67,6 +68,8 @@ class HomePage extends StatelessWidget {
                         fontSize: 16,
                       ),
                     ),
+                    const SizedBox(height: 24),
+                    _RoleRequestCard(controller: controller),
                     const SizedBox(height: 32),
                     const Wrap(
                       spacing: 16,
@@ -358,4 +361,117 @@ class _VerificationCard extends StatelessWidget {
       trailing: TextButton(onPressed: onResend, child: const Text('Renvoyer')),
     ),
   );
+}
+
+class _RoleRequestCard extends StatefulWidget {
+  const _RoleRequestCard({required this.controller});
+  final AuthController controller;
+
+  @override
+  State<_RoleRequestCard> createState() => _RoleRequestCardState();
+}
+
+class _RoleRequestCardState extends State<_RoleRequestCard> {
+  RequestedRole _selectedRole = RequestedRole.teacher;
+
+  @override
+  Widget build(BuildContext context) {
+    final request = widget.controller.roleRequest;
+    if (widget.controller.isRoleLoading && request == null) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: LinearProgressIndicator(),
+        ),
+      );
+    }
+    if (request != null) return _statusCard(request);
+    return Card(
+      color: const Color(0xFFF0F7F4),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Dites-nous qui vous êtes',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF153D35),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Votre demande sera vérifiée par l’administration. Le choix ci-dessous ne donne aucun accès supplémentaire tout seul.',
+              style: TextStyle(color: Color(0xFF50665F), height: 1.45),
+            ),
+            const SizedBox(height: 18),
+            DropdownButtonFormField<RequestedRole>(
+              key: ValueKey(_selectedRole),
+              initialValue: _selectedRole,
+              decoration: const InputDecoration(
+                labelText: 'Votre rôle',
+                prefixIcon: Icon(Icons.badge_outlined),
+              ),
+              items: RequestedRole.values
+                  .map(
+                    (role) =>
+                        DropdownMenuItem(value: role, child: Text(role.label)),
+                  )
+                  .toList(),
+              onChanged: widget.controller.isBusy
+                  ? null
+                  : (role) => setState(() => _selectedRole = role!),
+            ),
+            const SizedBox(height: 14),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: widget.controller.isBusy
+                    ? null
+                    : () => widget.controller.requestRole(_selectedRole),
+                icon: const Icon(Icons.send_rounded, size: 18),
+                label: const Text('Envoyer ma demande'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _statusCard(RoleRequest request) {
+    final approved = request.isApproved;
+    final color = approved ? const Color(0xFF196B5B) : const Color(0xFF9A6500);
+    return Card(
+      color: approved ? const Color(0xFFE8F5F0) : const Color(0xFFFFF5E3),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 10,
+        ),
+        leading: Icon(
+          approved ? Icons.verified_rounded : Icons.hourglass_top_rounded,
+          color: color,
+          size: 30,
+        ),
+        title: Text(
+          approved
+              ? 'Rôle validé : ${request.requestedRole.label}'
+              : 'Demande en attente : ${request.requestedRole.label}',
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF153D35),
+          ),
+        ),
+        subtitle: Text(
+          approved
+              ? 'Vos accès seront activés par le serveur.'
+              : 'L’administration doit valider votre rôle avant l’accès aux fonctionnalités dédiées.',
+          style: const TextStyle(color: Color(0xFF50665F)),
+        ),
+      ),
+    );
+  }
 }

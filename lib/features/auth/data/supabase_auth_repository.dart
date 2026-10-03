@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/supabase/supabase_config.dart';
+import '../../users/domain/role_request.dart';
 import '../domain/auth_repository.dart';
 
 class SupabaseAuthRepository implements AuthRepository {
@@ -49,4 +50,25 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() => _client.auth.signOut();
+
+  @override
+  Future<RoleRequest?> getRoleRequest() async {
+    final result = await _client
+        .from('role_requests')
+        .select()
+        .order('created_at', ascending: false)
+        .limit(1)
+        .maybeSingle();
+    return result == null ? null : RoleRequest.fromMap(result);
+  }
+
+  @override
+  Future<void> submitRoleRequest(RequestedRole role) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw const AuthException('Utilisateur non connecté.');
+    await _client.from('role_requests').insert({
+      'user_id': user.id,
+      'requested_role': role.value,
+    });
+  }
 }

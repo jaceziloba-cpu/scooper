@@ -2,11 +2,16 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../domain/auth_repository.dart';
+import '../../users/domain/role_request.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController(this._repository) {
     _subscription = _repository?.authStateChanges.listen((user) {
       _user = user;
+      roleRequest = null;
+      if (user != null) {
+        _loadRoleRequest();
+      }
       notifyListeners();
     });
   }
@@ -15,6 +20,8 @@ class AuthController extends ChangeNotifier {
   User? _user;
   bool isBusy = false;
   String? errorMessage;
+  RoleRequest? roleRequest;
+  bool isRoleLoading = false;
   User? get user => _user;
   Future<void> signIn(String email, String password) => _run(() async {
     await _repository!.signInWithEmail(email, password);
@@ -30,6 +37,25 @@ class AuthController extends ChangeNotifier {
       _run(() => _repository!.sendPasswordResetEmail(email));
   Future<void> resendVerification() => _run(_repository!.sendEmailVerification);
   Future<void> signOut() => _run(_repository!.signOut);
+  Future<void> requestRole(RequestedRole role) => _run(() async {
+    await _repository!.submitRoleRequest(role);
+    await _loadRoleRequest();
+  });
+
+  Future<void> _loadRoleRequest() async {
+    if (_repository == null) return;
+    isRoleLoading = true;
+    notifyListeners();
+    try {
+      roleRequest = await _repository.getRoleRequest();
+    } catch (_) {
+      roleRequest = null;
+    } finally {
+      isRoleLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _run(Future<void> Function() operation) async {
     isBusy = true;
     errorMessage = null;
