@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/presentation/auth_controller.dart';
-import '../../users/domain/role_request.dart';
+import '../../users/domain/school_membership.dart';
+import '../../users/domain/user_profile.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({required this.controller, super.key});
@@ -10,11 +11,11 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = controller.user!;
-    final name =
-        user.userMetadata?['full_name'] as String? ??
-        user.userMetadata?['name'] as String? ??
-        'Utilisateur';
+    final profile = controller.profile;
+    final membership = controller.membership;
+    final name = profile?.fullName ?? 'Utilisateur';
     final desktop = MediaQuery.sizeOf(context).width >= 900;
+
     return Scaffold(
       appBar: desktop
           ? null
@@ -69,7 +70,7 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    _RoleRequestCard(controller: controller),
+                    _ProfileStatusCard(profile: profile, membership: membership),
                     const SizedBox(height: 32),
                     const Wrap(
                       spacing: 16,
@@ -78,13 +79,13 @@ class HomePage extends StatelessWidget {
                         _SummaryCard(
                           icon: Icons.calendar_month_rounded,
                           label: 'Emploi du temps',
-                          value: 'À venir',
+                          value: 'Disponible',
                           color: Color(0xFFE4F4EE),
                         ),
                         _SummaryCard(
                           icon: Icons.groups_rounded,
                           label: 'Équipe',
-                          value: 'À configurer',
+                          value: 'Active',
                           color: Color(0xFFEAF0FF),
                         ),
                         _SummaryCard(
@@ -136,52 +137,54 @@ class _SideBar extends StatelessWidget {
   final VoidCallback onLogout;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 250,
-    margin: const EdgeInsets.all(16),
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: const Color(0xFF164F43),
-      borderRadius: BorderRadius.circular(26),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'scooper',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 27,
-            fontWeight: FontWeight.w800,
+  Widget build(BuildContext context) {
+    return Container(
+      width: 250,
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF164F43),
+        borderRadius: BorderRadius.circular(26),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'scooper',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 27,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-        const SizedBox(height: 54),
-        const _NavItem(
-          icon: Icons.dashboard_rounded,
-          label: 'Tableau de bord',
-          selected: true,
-        ),
-        const _NavItem(
-          icon: Icons.calendar_month_rounded,
-          label: 'Emploi du temps',
-        ),
-        const _NavItem(icon: Icons.groups_rounded, label: 'Équipe'),
-        const _NavItem(
-          icon: Icons.notifications_none_rounded,
-          label: 'Notifications',
-        ),
-        const Spacer(),
-        TextButton.icon(
-          onPressed: onLogout,
-          icon: const Icon(Icons.logout_rounded, color: Color(0xFFBDE9D8)),
-          label: const Text(
-            'Se déconnecter',
-            style: TextStyle(color: Color(0xFFBDE9D8)),
+          const SizedBox(height: 54),
+          const _NavItem(
+            icon: Icons.dashboard_rounded,
+            label: 'Tableau de bord',
+            selected: true,
           ),
-        ),
-      ],
-    ),
-  );
+          const _NavItem(
+            icon: Icons.calendar_month_rounded,
+            label: 'Emploi du temps',
+          ),
+          const _NavItem(icon: Icons.groups_rounded, label: 'Équipe'),
+          const _NavItem(
+            icon: Icons.notifications_none_rounded,
+            label: 'Notifications',
+          ),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: onLogout,
+            icon: const Icon(Icons.logout_rounded, color: Color(0xFFBDE9D8)),
+            label: const Text(
+              'Se déconnecter',
+              style: TextStyle(color: Color(0xFFBDE9D8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _NavItem extends StatelessWidget {
@@ -195,27 +198,29 @@ class _NavItem extends StatelessWidget {
   final bool selected;
 
   @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(bottom: 8),
-    decoration: BoxDecoration(
-      color: selected ? const Color(0xFF2A7C69) : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: ListTile(
-      dense: true,
-      leading: Icon(
-        icon,
-        color: selected ? Colors.white : const Color(0xFFBDE9D8),
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: selected ? const Color(0xFF2A7C69) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
       ),
-      title: Text(
-        label,
-        style: TextStyle(
+      child: ListTile(
+        dense: true,
+        leading: Icon(
+          icon,
           color: selected ? Colors.white : const Color(0xFFBDE9D8),
-          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+        ),
+        title: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : const Color(0xFFBDE9D8),
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _SummaryCard extends StatelessWidget {
@@ -231,38 +236,40 @@ class _SummaryCard extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: 230,
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(12),
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 230,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: const Color(0xFF196B5B)),
               ),
-              child: Icon(icon, color: const Color(0xFF196B5B)),
-            ),
-            const SizedBox(height: 18),
-            Text(label, style: const TextStyle(color: Color(0xFF65736F))),
-            const SizedBox(height: 5),
-            Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 17,
-                color: Color(0xFF153D35),
+              const SizedBox(height: 18),
+              Text(label, style: const TextStyle(color: Color(0xFF65736F))),
+              const SizedBox(height: 5),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 17,
+                  color: Color(0xFF153D35),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _WelcomeCard extends StatelessWidget {
@@ -270,169 +277,39 @@ class _WelcomeCard extends StatelessWidget {
   final String email;
 
   @override
-  Widget build(BuildContext context) => Card(
-    color: const Color(0xFFE8F5F0),
-    child: Padding(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.waving_hand_rounded,
-            color: Color(0xFF196B5B),
-            size: 32,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Bienvenue dans Scooper',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF153D35),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Votre espace est prêt. Commencez par configurer votre établissement pour inviter votre équipe et organiser vos journées.',
-            style: TextStyle(color: Color(0xFF50665F), height: 1.5),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            email,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF196B5B),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _NextStepCard extends StatelessWidget {
-  const _NextStepCard();
-
-  @override
-  Widget build(BuildContext context) => const Card(
-    child: Padding(
-      padding: EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Prochaine étape',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF153D35),
-            ),
-          ),
-          SizedBox(height: 14),
-          Text(
-            'Configurez votre établissement pour débloquer les fonctionnalités de votre équipe.',
-            style: TextStyle(color: Color(0xFF65736F), height: 1.5),
-          ),
-          SizedBox(height: 20),
-          LinearProgressIndicator(
-            value: .2,
-            minHeight: 8,
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _VerificationCard extends StatelessWidget {
-  const _VerificationCard({required this.onResend});
-  final VoidCallback onResend;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    child: ListTile(
-      leading: const Icon(
-        Icons.mark_email_unread_outlined,
-        color: Color(0xFFB36B00),
-      ),
-      title: const Text('Vérifiez votre adresse email'),
-      subtitle: const Text('Un lien de confirmation vous a été envoyé.'),
-      trailing: TextButton(onPressed: onResend, child: const Text('Renvoyer')),
-    ),
-  );
-}
-
-class _RoleRequestCard extends StatefulWidget {
-  const _RoleRequestCard({required this.controller});
-  final AuthController controller;
-
-  @override
-  State<_RoleRequestCard> createState() => _RoleRequestCardState();
-}
-
-class _RoleRequestCardState extends State<_RoleRequestCard> {
-  RequestedRole _selectedRole = RequestedRole.teacher;
-
-  @override
   Widget build(BuildContext context) {
-    final request = widget.controller.roleRequest;
-    if (widget.controller.isRoleLoading && request == null) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: LinearProgressIndicator(),
-        ),
-      );
-    }
-    if (request != null) return _statusCard(request);
     return Card(
-      color: const Color(0xFFF0F7F4),
+      color: const Color(0xFFE8F5F0),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const Icon(
+              Icons.waving_hand_rounded,
+              color: Color(0xFF196B5B),
+              size: 32,
+            ),
+            const SizedBox(height: 16),
             const Text(
-              'Dites-nous qui vous êtes',
+              'Bienvenue dans Scooper',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF153D35),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             const Text(
-              'Votre demande sera vérifiée par l’administration. Le choix ci-dessous ne donne aucun accès supplémentaire tout seul.',
-              style: TextStyle(color: Color(0xFF50665F), height: 1.45),
+              'Votre espace est prêt. Vous bénéficiez d’une expérience fluide et sécurisée.',
+              style: TextStyle(color: Color(0xFF50665F), height: 1.5),
             ),
             const SizedBox(height: 18),
-            DropdownButtonFormField<RequestedRole>(
-              key: ValueKey(_selectedRole),
-              initialValue: _selectedRole,
-              decoration: const InputDecoration(
-                labelText: 'Votre rôle',
-                prefixIcon: Icon(Icons.badge_outlined),
-              ),
-              items: RequestedRole.values
-                  .map(
-                    (role) =>
-                        DropdownMenuItem(value: role, child: Text(role.label)),
-                  )
-                  .toList(),
-              onChanged: widget.controller.isBusy
-                  ? null
-                  : (role) => setState(() => _selectedRole = role!),
-            ),
-            const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: widget.controller.isBusy
-                    ? null
-                    : () => widget.controller.requestRole(_selectedRole),
-                icon: const Icon(Icons.send_rounded, size: 18),
-                label: const Text('Envoyer ma demande'),
+            Text(
+              email,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF196B5B),
               ),
             ),
           ],
@@ -440,35 +317,100 @@ class _RoleRequestCardState extends State<_RoleRequestCard> {
       ),
     );
   }
+}
 
-  Widget _statusCard(RoleRequest request) {
-    final approved = request.isApproved;
-    final color = approved ? const Color(0xFF196B5B) : const Color(0xFF9A6500);
+class _NextStepCard extends StatelessWidget {
+  const _NextStepCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Espace personnel',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF153D35),
+              ),
+            ),
+            SizedBox(height: 14),
+            Text(
+              'Vos informations et rôles sont synchronisés avec Supabase.',
+              style: TextStyle(color: Color(0xFF65736F), height: 1.5),
+            ),
+            SizedBox(height: 20),
+            LinearProgressIndicator(
+              value: 1.0,
+              minHeight: 8,
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VerificationCard extends StatelessWidget {
+  const _VerificationCard({required this.onResend});
+  final VoidCallback onResend;
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
-      color: approved ? const Color(0xFFE8F5F0) : const Color(0xFFFFF5E3),
+      child: ListTile(
+        leading: const Icon(
+          Icons.mark_email_unread_outlined,
+          color: Color(0xFFB36B00),
+        ),
+        title: const Text('Vérifiez votre adresse email'),
+        subtitle: const Text('Un lien de confirmation vous a été envoyé.'),
+        trailing: TextButton(onPressed: onResend, child: const Text('Renvoyer')),
+      ),
+    );
+  }
+}
+
+class _ProfileStatusCard extends StatelessWidget {
+  const _ProfileStatusCard({this.profile, this.membership});
+
+  final UserProfile? profile;
+  final SchoolMembership? membership;
+
+  @override
+  Widget build(BuildContext context) {
+    final roleName = profile?.role.label ?? 'Élève';
+    final schoolName = membership?.schoolName ?? 'Établissement';
+    final isApproved = membership?.isApproved ?? true;
+
+    return Card(
+      color: isApproved ? const Color(0xFFE8F5F0) : const Color(0xFFFFF5E3),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 24,
-          vertical: 10,
+          vertical: 12,
         ),
         leading: Icon(
-          approved ? Icons.verified_rounded : Icons.hourglass_top_rounded,
-          color: color,
-          size: 30,
+          isApproved ? Icons.verified_rounded : Icons.hourglass_top_rounded,
+          color: isApproved ? const Color(0xFF196B5B) : const Color(0xFF9A6500),
+          size: 32,
         ),
         title: Text(
-          approved
-              ? 'Rôle validé : ${request.requestedRole.label}'
-              : 'Demande en attente : ${request.requestedRole.label}',
+          'Profil $roleName • $schoolName',
           style: const TextStyle(
             fontWeight: FontWeight.w800,
             color: Color(0xFF153D35),
           ),
         ),
         subtitle: Text(
-          approved
-              ? 'Vos accès seront activés par le serveur.'
-              : 'L’administration doit valider votre rôle avant l’accès aux fonctionnalités dédiées.',
+          isApproved
+              ? 'Accès au tableau de bord confirmé.'
+              : 'En attente de confirmation par votre établissement.',
           style: const TextStyle(color: Color(0xFF50665F)),
         ),
       ),

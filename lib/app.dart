@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+
 import 'features/auth/presentation/auth_controller.dart';
-import 'features/auth/presentation/login_page.dart';
-import 'features/home/presentation/home_page.dart';
+import 'features/auth/presentation/complete_profile_page.dart';
+import 'features/dashboards/presentation/auth_loading_screen.dart';
+import 'features/dashboards/presentation/school_admin_dashboard.dart';
+import 'features/dashboards/presentation/student_dashboard.dart';
+import 'features/dashboards/presentation/super_admin_dashboard.dart';
+import 'features/dashboards/presentation/teacher_dashboard.dart';
+import 'features/dashboards/presentation/teacher_pending_screen.dart';
+import 'features/public/presentation/public_navigation_shell.dart';
+import 'features/users/domain/user_profile.dart';
 
 class ScooperApp extends StatelessWidget {
   const ScooperApp({
@@ -9,12 +17,13 @@ class ScooperApp extends StatelessWidget {
     required this.supabaseReady,
     super.key,
   });
+
   final AuthController authController;
   final bool supabaseReady;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'Scooper',
+    title: 'SCOOPER - SaaS Éducatif',
     debugShowCheckedModeBanner: false,
     theme: ThemeData(
       brightness: Brightness.light,
@@ -53,9 +62,35 @@ class ScooperApp extends StatelessWidget {
     ),
     home: AnimatedBuilder(
       animation: authController,
-      builder: (context, _) => authController.user == null
-          ? LoginPage(controller: authController, supabaseReady: supabaseReady)
-          : HomePage(controller: authController),
+      builder: (context, _) {
+        if (authController.isAuthLoading) {
+          return const AuthLoadingScreen();
+        }
+
+        final user = authController.user;
+        if (user == null) {
+          return PublicNavigationShell(
+            controller: authController,
+            supabaseReady: supabaseReady,
+          );
+        }
+
+        if (authController.isProfileIncomplete) {
+          return CompleteProfilePage(controller: authController);
+        }
+
+        final role = authController.profile?.role ?? ScooperRole.student;
+        final membership = authController.membership;
+
+        return switch (role) {
+          ScooperRole.superAdmin => SuperAdminDashboard(controller: authController),
+          ScooperRole.schoolAdmin => SchoolAdminDashboard(controller: authController),
+          ScooperRole.teacher => membership?.isApproved == true
+              ? TeacherDashboard(controller: authController)
+              : TeacherPendingScreen(controller: authController),
+          ScooperRole.student => StudentDashboard(controller: authController),
+        };
+      },
     ),
   );
 }
