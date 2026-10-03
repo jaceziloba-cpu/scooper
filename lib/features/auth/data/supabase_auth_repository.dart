@@ -130,7 +130,7 @@ class SupabaseAuthRepository implements AuthRepository {
     required String password,
     required String firstName,
     required String lastName,
-    required String dateOfBirth,
+    String? dateOfBirth,
     required String schoolId,
     String? className,
   }) async {
@@ -151,7 +151,8 @@ class SupabaseAuthRepository implements AuthRepository {
         'email': email.trim(),
         'first_name': firstName.trim(),
         'last_name': lastName.trim(),
-        'date_of_birth': dateOfBirth,
+        if (dateOfBirth != null && dateOfBirth.isNotEmpty)
+          'date_of_birth': dateOfBirth,
         'role': 'student',
       });
 
@@ -160,7 +161,7 @@ class SupabaseAuthRepository implements AuthRepository {
         'school_id': schoolId,
         'membership_type': 'student',
         'status': 'approved',
-        'class_name': className?.trim(),
+        if (className != null && className.isNotEmpty) 'class_name': className,
       });
     }
   }

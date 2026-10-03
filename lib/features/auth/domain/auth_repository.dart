@@ -19,7 +19,7 @@ abstract interface class AuthRepository {
     required String password,
     required String firstName,
     required String lastName,
-    required String dateOfBirth,
+    String? dateOfBirth,
     required String schoolId,
     String? className,
   });

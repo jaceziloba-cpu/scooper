@@ -99,13 +99,19 @@ class AuthController extends ChangeNotifier {
       _profile = await repo.fetchProfile(user.id);
       _membership = await repo.fetchUserMembership(user.id);
 
-      if (_profile == null || !_profile!.isProfileComplete || _membership == null) {
+      // Profil incomplet seulement si absent ou champs obligatoires vides.
+      // Un membership null n'est pas bloquant si le profil est déjà complet
+      // (ex : tables pas encore migrées, ou RLS temporairement restrictive).
+      if (_profile == null || !_profile!.isProfileComplete) {
         isProfileIncomplete = true;
       } else {
         isProfileIncomplete = false;
       }
-    } catch (_) {
-      isProfileIncomplete = true;
+    } catch (e) {
+      debugPrint('[AuthController] Erreur chargement profil: $e');
+      // En cas d'erreur réseau/RLS, on ne bloque pas un utilisateur
+      // déjà authentifié dont on a pu lire le profil.
+      isProfileIncomplete = (_profile == null || !(_profile?.isProfileComplete ?? false));
     } finally {
       isAuthLoading = false;
       notifyListeners();
@@ -123,7 +129,7 @@ class AuthController extends ChangeNotifier {
     required String password,
     required String firstName,
     required String lastName,
-    required String dateOfBirth,
+    String? dateOfBirth,
     required String schoolId,
     String? className,
   }) => _run(() async {
@@ -287,7 +293,15 @@ class AuthController extends ChangeNotifier {
     } on AuthException catch (error) {
       errorMessage = _friendlyError(error);
     } catch (e) {
-      errorMessage = 'Une erreur est survenue (${e.toString()}). Réessayez.';
+      debugPrint('[AuthController] Erreur inattendue: $e');
+      final msg = e.toString().toLowerCase();
+      if (msg.contains('network') || msg.contains('socketexception') || msg.contains('connection')) {
+        errorMessage = 'Impossible de joindre le serveur. Vérifiez votre connexion internet.';
+      } else if (msg.contains('email') || msg.contains('password')) {
+        errorMessage = 'Email ou mot de passe incorrect.';
+      } else {
+        errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+      }
     } finally {
       isBusy = false;
       notifyListeners();

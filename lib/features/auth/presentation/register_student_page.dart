@@ -249,9 +249,9 @@ class _RegisterStudentPageState extends State<RegisterStudentPage> {
       password: _password.text,
       firstName: _firstName.text,
       lastName: _lastName.text,
-      dateOfBirth: _dob.text,
+      dateOfBirth: _dob.text.trim().isEmpty ? null : _dob.text.trim(),
       schoolId: _selectedSchoolId!,
-      className: _className.text,
+      className: _className.text.trim().isEmpty ? null : _className.text.trim(),
     );
   }
 
