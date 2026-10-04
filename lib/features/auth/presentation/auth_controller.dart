@@ -294,14 +294,7 @@ class AuthController extends ChangeNotifier {
       errorMessage = _friendlyError(error);
     } catch (e) {
       debugPrint('[AuthController] Erreur inattendue: $e');
-      final msg = e.toString().toLowerCase();
-      if (msg.contains('network') || msg.contains('socketexception') || msg.contains('connection')) {
-        errorMessage = 'Impossible de joindre le serveur. Vérifiez votre connexion internet.';
-      } else if (msg.contains('email') || msg.contains('password')) {
-        errorMessage = 'Email ou mot de passe incorrect.';
-      } else {
-        errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
-      }
+      errorMessage = _friendlyErrorUnknown(e);
     } finally {
       isBusy = false;
       notifyListeners();
@@ -312,6 +305,11 @@ class AuthController extends ChangeNotifier {
     final message = error.message.toLowerCase();
     if (error.code == 'validation_failed' || message.contains('provider')) {
       return 'La connexion Google n’est pas encore activée. Activez Google dans Supabase > Authentication > Providers.';
+    }
+    // Erreurs de transport (réseau / CORS / serveur injoignable) remontées
+    // par le SDK sans code d'erreur : message clair au lieu du texte brut.
+    if (error.code == null && _looksLikeNetworkError(message)) {
+      return 'Impossible de joindre le serveur. Vérifiez votre connexion internet et que le domaine du site est autorisé (CORS) dans Supabase > Authentication > URL Configuration.';
     }
     return switch (error.code) {
       'invalid_credentials' => 'Email ou mot de passe incorrect.',
@@ -324,6 +322,64 @@ class AuthController extends ChangeNotifier {
       _ => error.message,
     };
   }
+
+  String _friendlyErrorUnknown(Object error) {
+    final detail = error.toString();
+    final msg = detail.toLowerCase();
+    if (msg.contains('cors') ||
+        msg.contains('failed to fetch') ||
+        msg.contains('fetch failed') ||
+        msg.contains('typeerror') ||
+        msg.contains('networkerror') ||
+        msg.contains('clientexception') ||
+        msg.contains('requestexception') ||
+        msg.contains('timeout') ||
+        msg.contains('unreachable') ||
+        msg.contains('connection refused') ||
+        msg.contains('dns')) {
+      return 'Impossible de joindre le serveur. Vérifiez votre connexion internet et que le domaine du site est autorisé (CORS) dans Supabase > Authentication > URL Configuration.';
+    }
+    if (msg.contains('platformexception') ||
+        msg.contains('localstorage') ||
+        msg.contains('indexeddb') ||
+        msg.contains('securityerror') ||
+        msg.contains('cookie')) {
+      return 'Votre navigateur bloque le stockage local (cookies / données de site). Autorisez les cookies et les données de site pour ce domaine puis réessayez.';
+    }
+    if (msg.contains('unauthorized') ||
+        msg.contains('invalid api key') ||
+        msg.contains('apikey') ||
+        msg.contains('statuscode: 401') ||
+        msg.contains('http 401')) {
+      return 'Clé API Supabase invalide ou non autorisée. Vérifiez SupabaseConfig (publishableKey).';
+    }
+    if (msg.contains('redirect_uri') ||
+        msg.contains('invalid_state') ||
+        msg.contains('bad_oauth') ||
+        msg.contains('pkce') ||
+        msg.contains('oauth') ||
+        msg.contains('callback')) {
+      return 'La connexion a échoué. Vérifiez les URLs de redirection autorisées dans Supabase (Authentication > URL Configuration) et dans Google Cloud.';
+    }
+    if (msg.contains('email') || msg.contains('password')) {
+      return 'Email ou mot de passe incorrect.';
+    }
+    // Dernier recours : on garde un message compréhensible mais on expose le
+    // détail technique (tronqué) pour permettre le diagnostic réel.
+    final shortDetail = detail.length > 220 ? detail.substring(0, 220) : detail;
+    return 'Une erreur est survenue. Veuillez réessayer. ($shortDetail)';
+  }
+
+  bool _looksLikeNetworkError(String message) =>
+      message.contains('failed to fetch') ||
+      message.contains('fetch failed') ||
+      message.contains('clientexception') ||
+      message.contains('typeerror') ||
+      message.contains('cors') ||
+      message.contains('network') ||
+      message.contains('socketexception') ||
+      message.contains('connection') ||
+      message.contains('timeout');
 
   @override
   void dispose() {
