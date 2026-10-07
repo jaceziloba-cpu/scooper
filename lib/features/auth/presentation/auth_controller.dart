@@ -292,6 +292,9 @@ class AuthController extends ChangeNotifier {
       await operation();
     } on AuthException catch (error) {
       errorMessage = _friendlyError(error);
+    } on PostgrestException catch (error) {
+      debugPrint('[AuthController] Erreur base de données: $error');
+      errorMessage = _friendlyPostgrestError(error);
     } catch (e) {
       debugPrint('[AuthController] Erreur inattendue: $e');
       errorMessage = _friendlyErrorUnknown(e);
@@ -368,6 +371,58 @@ class AuthController extends ChangeNotifier {
     // détail technique (tronqué) pour permettre le diagnostic réel.
     final shortDetail = detail.length > 220 ? detail.substring(0, 220) : detail;
     return 'Une erreur est survenue. Veuillez réessayer. ($shortDetail)';
+  }
+
+  /// Transforme une erreur PostgreSQL/PostgREST en message clair et adapté à
+  /// l'utilisateur, en évitant d'exposer du SQL brut.
+  String _friendlyPostgrestError(PostgrestException error) {
+    final code = error.code?.toUpperCase() ?? '';
+    final raw = '${error.message} ${error.details ?? ''}'.toLowerCase();
+
+    // Colonne ou table introuvable => schéma Supabase désynchronisé
+    // (ex : "column profiles.date_of_birth does not exist" - PGRST204).
+    if (code == 'PGRST204' || code == 'PGRST205' ||
+        raw.contains('does not exist') ||
+        raw.contains('relation ') && raw.contains('does not exist')) {
+      return 'Le schéma de la base de données ne correspond pas à la version de '
+          'l’application. Contactez l’administrateur pour appliquer les dernières '
+          'migrations Supabase, puis réessayez.';
+    }
+    // RLS : action refusée par une politique de sécurité.
+    if (code == '42501' || raw.contains('row-level security') ||
+        raw.contains('permission denied') ||
+        raw.contains('new row violates row-level security')) {
+      return 'Vous n’avez pas l’autorisation d’effectuer cette action avec ce '
+          'profil. Vérifiez vos informations ou contactez l’administration de '
+          'l’établissement.';
+    }
+    // Contrainte unique (doublon).
+    if (code == '23505' || raw.contains('duplicate key')) {
+      return 'Un enregistrement avec ces informations existe déjà. Vérifiez les '
+          'données saisies ou contactez l’administration.';
+    }
+    // Clé étrangère invalide (ex : établissement inexistant).
+    if (code == '23503' || raw.contains('foreign key')) {
+      return 'L’élément sélectionné (établissement, classe…) est introuvable. '
+          'Rechargez la page puis réessayez.';
+    }
+    if (code == 'P0001' || raw.contains('modification du rôle')) {
+      return 'Vous ne pouvez pas modifier votre rôle d’utilisateur. '
+          'Contactez l’administration de l’établissement.';
+    }
+    if (code == '23514' || raw.contains('check constraint')) {
+      return 'Une valeur saisie n’est pas valide. Vérifiez les champs du formulaire.';
+    }
+    if (code == '22P02' || raw.contains('invalid input value')) {
+      return 'Une valeur saisie n’a pas le bon format. Vérifiez vos champs.';
+    }
+    if (raw.contains('does not match row')) {
+      return 'Cette opération échoue à cause d’une règle de sécurité (RLS). '
+          'Contactez l’administrateur.';
+    }
+    // Message lisible, sans détails SQL brut.
+    return 'Une erreur est survenue lors de l’enregistrement de vos données. '
+        'Veuillez réessayer. Si le problème persiste, contactez l’administrateur.';
   }
 
   bool _looksLikeNetworkError(String message) =>
