@@ -99,10 +99,12 @@ class AuthController extends ChangeNotifier {
       _profile = await repo.fetchProfile(user.id);
       _membership = await repo.fetchUserMembership(user.id);
 
-      // Profil incomplet seulement si absent ou champs obligatoires vides.
-      // Un membership null n'est pas bloquant si le profil est déjà complet
-      // (ex : tables pas encore migrées, ou RLS temporairement restrictive).
-      if (_profile == null || !_profile!.isProfileComplete) {
+      // Les comptes administrateurs sont provisionnés côté serveur et doivent
+      // accéder directement à leur espace, même si leur nom sera complété plus tard.
+      final isProvisionedAdmin = _profile?.role == ScooperRole.schoolAdmin ||
+          _profile?.role == ScooperRole.superAdmin;
+      if (!isProvisionedAdmin &&
+          (_profile == null || !_profile!.isProfileComplete)) {
         isProfileIncomplete = true;
       } else {
         isProfileIncomplete = false;
