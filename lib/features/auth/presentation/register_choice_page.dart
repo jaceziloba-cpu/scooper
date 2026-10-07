@@ -90,6 +90,52 @@ class _RegisterChoicePageState extends State<RegisterChoicePage> {
                     color: const Color(0xFF007A87),
                     onTap: () => setState(() => _selectedRole = 'teacher'),
                   ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF7F9F8),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFDDE7E3)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.admin_panel_settings_outlined,
+                          color: Color(0xFF196B5B),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Administrateur d’établissement',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF153D35),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Ce compte est créé et validé par SCOOPER. Ne créez pas un compte public : connectez-vous avec les identifiants transmis par votre établissement.',
+                                style: TextStyle(
+                                  color: Color(0xFF65736F),
+                                  fontSize: 13,
+                                  height: 1.35,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => widget.controller.setPublicTab(PublicTab.login),
+                                child: const Text('Accéder à la connexion établissement'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 28),
                   Wrap(
                     alignment: WrapAlignment.center,

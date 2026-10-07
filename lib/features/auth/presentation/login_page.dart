@@ -211,6 +211,35 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         label: const Text('Continuer avec Google'),
                       ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5F0),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFBDE9D8)),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.admin_panel_settings_outlined,
+                              color: Color(0xFF196B5B),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Administrateur d’établissement ? Utilisez ici les identifiants fournis par SCOOPER. Votre espace administrateur s’ouvrira automatiquement après validation de votre rôle.',
+                                style: TextStyle(
+                                  color: const Color(0xFF155344),
+                                  fontSize: 12.5,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                     const SizedBox(height: 20),
                     Wrap(

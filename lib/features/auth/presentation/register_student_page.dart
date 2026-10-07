@@ -109,7 +109,10 @@ class _RegisterStudentPageState extends State<RegisterStudentPage> {
                         Expanded(
                           child: TextFormField(
                             controller: _firstName,
-                            decoration: const InputDecoration(labelText: 'Prénom *'),
+                            decoration: const InputDecoration(
+                              labelText: 'Prénom *',
+                              hintText: 'ex. John',
+                            ),
                             validator: (v) => v == null || v.trim().isEmpty
                                 ? 'Prénom requis'
                                 : null,
@@ -119,7 +122,10 @@ class _RegisterStudentPageState extends State<RegisterStudentPage> {
                         Expanded(
                           child: TextFormField(
                             controller: _lastName,
-                            decoration: const InputDecoration(labelText: 'Nom *'),
+                            decoration: const InputDecoration(
+                              labelText: 'Nom *',
+                              hintText: 'ex. Dupont',
+                            ),
                             validator: (v) => v == null || v.trim().isEmpty
                                 ? 'Nom requis'
                                 : null,
@@ -185,7 +191,7 @@ class _RegisterStudentPageState extends State<RegisterStudentPage> {
                       decoration: const InputDecoration(
                         labelText: 'Date de naissance / Âge',
                         prefixIcon: Icon(Icons.cake_outlined),
-                        hintText: 'ex: 15/04/2008',
+                        hintText: 'JJ/MM/AAAA — ex. 15/04/2008',
                       ),
                     ),
                     const SizedBox(height: 14),

@@ -146,7 +146,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                           Expanded(
                             child: TextFormField(
                               controller: _firstName,
-                              decoration: const InputDecoration(labelText: 'Prénom *'),
+                              decoration: const InputDecoration(
+                                labelText: 'Prénom *',
+                                hintText: 'ex. John',
+                              ),
                               validator: (v) => v == null || v.trim().isEmpty ? 'Prénom requis' : null,
                             ),
                           ),
@@ -154,7 +157,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                           Expanded(
                             child: TextFormField(
                               controller: _lastName,
-                              decoration: const InputDecoration(labelText: 'Nom *'),
+                              decoration: const InputDecoration(
+                                labelText: 'Nom *',
+                                hintText: 'ex. Dupont',
+                              ),
                               validator: (v) => v == null || v.trim().isEmpty ? 'Nom requis' : null,
                             ),
                           ),
@@ -169,6 +175,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                               decoration: const InputDecoration(
                                 labelText: 'Date de naissance',
                                 prefixIcon: Icon(Icons.cake_outlined),
+                                hintText: 'JJ/MM/AAAA — ex. 15/04/2008',
                               ),
                             ),
                           ),
